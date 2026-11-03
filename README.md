@@ -77,6 +77,20 @@ git pull
   /Applications/MySideNotes.app/Contents/MacOS/MySideNotes --show
   ```
 
+**`fatal: destination path 'My-sidenotes' already exists`**
+
+เคย clone ไว้แล้ว ให้อัปเดตโค้ดในโฟลเดอร์เดิมแทน:
+
+```bash
+cd My-sidenotes
+git pull
+./scripts/build-app.sh --install
+```
+
+**`swift build` ขึ้น `Invalid manifest` / `Undefined symbols ... PackageDescription`**
+
+Command Line Tools ในเครื่องติดตั้งไม่สมบูรณ์ (มักเกิดหลังอัปเดต macOS) — `scripts/build-app.sh` คอมไพล์ด้วย `swiftc` ตรง ๆ จึงไม่โดนปัญหานี้ แต่ถ้าต้องการใช้ `swift build` ให้ติดตั้ง Command Line Tools ใหม่ตามด้านล่าง
+
 **Build ไม่ผ่าน**
 
 - เช็กเวอร์ชัน: `sw_vers -productVersion` (ต้อง 14 ขึ้นไป) และ `swift --version`

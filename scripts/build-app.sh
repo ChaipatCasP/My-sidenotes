@@ -17,16 +17,25 @@ if (( macos_major < 14 )); then
     fail "ต้องใช้ macOS 14 ขึ้นไป (เครื่องนี้เป็น $(sw_vers -productVersion))"
 fi
 
-if ! xcrun --find swift >/dev/null 2>&1; then
+if ! xcrun --find swiftc >/dev/null 2>&1; then
     fail "ไม่พบ Swift — ติดตั้ง Command Line Tools ก่อนด้วยคำสั่ง: xcode-select --install"
 fi
 
-echo "▶︎ Building ($(swift --version 2>/dev/null | head -1))"
-swift build -c release || fail "Build ไม่ผ่าน — ดู error ด้านบน (ลองอัปเดต Command Line Tools ผ่าน Software Update)"
-
+# Compile with swiftc directly rather than `swift build`: SwiftPM must first link Package.swift
+# against its PackageDescription library, which breaks on half-updated Command Line Tools.
+echo "▶︎ Building ($(xcrun swiftc --version 2>/dev/null | head -1))"
 rm -rf "$APP"
 mkdir -p "$APP/Contents/MacOS" "$APP/Contents/Resources"
-cp ".build/release/${APP_NAME}" "$APP/Contents/MacOS/${APP_NAME}"
+SOURCES=()
+while IFS= read -r file; do SOURCES+=("$file"); done < <(find "Sources/${APP_NAME}" -name '*.swift')
+xcrun swiftc \
+    -O -whole-module-optimization -parse-as-library -swift-version 5 \
+    -target "$(uname -m)-apple-macos14.0" \
+    -sdk "$(xcrun --show-sdk-path)" \
+    -module-name "$APP_NAME" \
+    "${SOURCES[@]}" \
+    -o "$APP/Contents/MacOS/${APP_NAME}" \
+    || fail "Build ไม่ผ่าน — ดู error ด้านบน (ลองอัปเดต Command Line Tools ผ่าน Software Update)"
 cp Resources/Info.plist "$APP/Contents/Info.plist"
 codesign --force --sign - "$APP"
 
