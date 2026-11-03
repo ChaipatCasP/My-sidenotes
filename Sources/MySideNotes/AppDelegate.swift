@@ -51,9 +51,18 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         setUpStatusItem()
 
-        if CommandLine.arguments.contains("--show") {
+        // A menu-bar-only app is easy to miss (e.g. its icon can sit behind the notch), so show the panel the first time.
+        let firstLaunchKey = "hasLaunchedBefore"
+        if CommandLine.arguments.contains("--show") || !UserDefaults.standard.bool(forKey: firstLaunchKey) {
+            UserDefaults.standard.set(true, forKey: firstLaunchKey)
             panel.show()
         }
+    }
+
+    /// Opening the app again from Finder, Launchpad or Spotlight shows the panel.
+    func applicationShouldHandleReopen(_ sender: NSApplication, hasVisibleWindows flag: Bool) -> Bool {
+        panel.show()
+        return false
     }
 
     func applicationWillTerminate(_ notification: Notification) {

@@ -14,13 +14,16 @@ struct GlassBackground: NSViewRepresentable {
     var cornerRadius: CGFloat
     var style: GlassStyle = .regular
 
+    // NSGlassEffectView only exists in the macOS 26 SDK (Swift 6.2+); older toolchains build the blur fallback.
     func makeNSView(context: Context) -> NSView {
+        #if compiler(>=6.2)
         if #available(macOS 26.0, *) {
             let glass = NSGlassEffectView()
             glass.style = style == .clear ? .clear : .regular
             glass.cornerRadius = cornerRadius
             return glass
         }
+        #endif
         let blur = NSVisualEffectView()
         blur.material = .popover
         blur.blendingMode = .behindWindow
@@ -30,10 +33,12 @@ struct GlassBackground: NSViewRepresentable {
     }
 
     func updateNSView(_ nsView: NSView, context: Context) {
+        #if compiler(>=6.2)
         if #available(macOS 26.0, *), let glass = nsView as? NSGlassEffectView {
             glass.cornerRadius = cornerRadius
             glass.style = style == .clear ? .clear : .regular
         }
+        #endif
     }
 
     private static func roundedMask(radius: CGFloat) -> NSImage {
