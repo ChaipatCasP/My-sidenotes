@@ -57,6 +57,11 @@ struct Note: Identifiable, Codable, Hashable {
         String(nonEmptyLines.dropFirst().joined(separator: " ").prefix(240))
     }
 
+    /// Everything after the title, one line per line, for an expanded card.
+    var details: String {
+        nonEmptyLines.dropFirst().joined(separator: "\n")
+    }
+
     var isBlank: Bool {
         text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty
     }

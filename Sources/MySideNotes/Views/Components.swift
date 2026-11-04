@@ -8,6 +8,10 @@ final class HoverState: ObservableObject {
     @Published var isHovering = false
 }
 
+final class ExpandState: ObservableObject {
+    @Published var isExpanded = false
+}
+
 // MARK: - Glass
 
 struct GlassBackground: NSViewRepresentable {
@@ -288,10 +292,14 @@ struct NoteCard: View {
     let onOpen: () -> Void
 
     @StateObject private var hover = HoverState()
+    @StateObject private var expand = ExpandState()
 
     var body: some View {
+        let isExpanded = expand.isExpanded
+        let showsToggle = hover.isHovering || isExpanded
+        let detail = isExpanded ? note.details : note.preview
         VStack(alignment: .leading, spacing: 4) {
-            HStack(spacing: 5) {
+            HStack(alignment: .firstTextBaseline, spacing: 5) {
                 if note.isStarred {
                     Image(systemName: "star.fill")
                         .font(.system(size: 10))
@@ -299,13 +307,31 @@ struct NoteCard: View {
                 }
                 Text(note.title)
                     .font(.system(size: 14, weight: .semibold))
-                    .lineLimit(1)
+                    .lineLimit(isExpanded ? nil : 1)
+                    .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+                // Kept in the layout while hidden so hovering doesn't shift the title.
+                Button {
+                    withAnimation(.snappy(duration: 0.2)) { expand.isExpanded.toggle() }
+                } label: {
+                    Image(systemName: "chevron.down")
+                        .font(.system(size: 10, weight: .semibold))
+                        .foregroundStyle(.secondary)
+                        .rotationEffect(.degrees(isExpanded ? 180 : 0))
+                        .frame(width: 18, height: 14)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .help(isExpanded ? "ย่อ" : "ขยาย")
+                .opacity(showsToggle ? 1 : 0)
+                .disabled(!showsToggle)
             }
-            if !note.preview.isEmpty {
-                Text(note.preview)
+            if !detail.isEmpty {
+                Text(detail)
                     .font(.system(size: 12))
                     .foregroundStyle(.secondary)
-                    .lineLimit(3)
+                    .lineLimit(isExpanded ? nil : 3)
+                    .fixedSize(horizontal: false, vertical: true)
             }
             HStack(spacing: 4) {
                 if let folder {
